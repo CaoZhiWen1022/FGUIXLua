@@ -1,0 +1,20 @@
+# FairyGUI 编辑器本地缓存（工作区布局、组件预览、临时 meta）
+.objs/
+
+# 操作系统杂项
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# 编辑器临时与备份
+*.tmp
+*.bak
+*~
+~$*
+
+# 本机用户目录（如后续出现）
+.local/
+.vs/
+.idea/
+.vscode/

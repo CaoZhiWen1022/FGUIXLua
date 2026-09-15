@@ -1,0 +1,70 @@
+# Unity 缓存与本地生成目录（克隆后由编辑器自动重建）
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+.utmp/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.idea/
+.vscode/
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# Unity 崩溃与构建产物
+sysinfo.txt
+crashlytics-build.properties
+*.apk
+*.aab
+*.unitypackage
+*.app
+*.exe
+*.zip
+
+# Addressables 本地打包缓存（如后续启用）
+/[Aa]ssets/[Aa]ddressable[Aa]ssets[Dd]ata/*/*.bin*
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+# JetBrains Rider 自动生成插件
+/[Aa]ssets/Plugins/Editor/JetBrains*
+
+# 操作系统杂项
+.DS_Store
+.DS_Store.meta
+Thumbs.db
+Thumbs.db.meta
+desktop.ini
+ehthumbs.db
+
+# Gradle / Android 本地缓存
+.gradle/
+
+# 本工程：WebGL 打包输出已在根目录 Build/，上面已忽略
+# StreamingAssets/AB 体积不大且运行需要，默认提交
+# 若只想上传源资源、自行打 AB，取消下面两行注释：
+# /[Aa]ssets/[Ss]treamingAssets/AB/
+# /[Aa]ssets/[Ss]treamingAssets/AB.meta

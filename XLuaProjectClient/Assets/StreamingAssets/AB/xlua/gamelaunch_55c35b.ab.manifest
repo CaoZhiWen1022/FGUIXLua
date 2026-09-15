@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 402394115
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 87d7801709c46b0ea5dc2d867ca91276
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 87d7801709c46b0ea5dc2d867ca91276
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ABBuildTemp/XLua/GameLaunch/UIID.bytes
+- Assets/ABBuildTemp/XLua/GameLaunch/XLuaLaunch.bytes
+Dependencies: []

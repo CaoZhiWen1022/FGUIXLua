@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1080,1920">
+  <displayList>
+    <graph id="n0_wuau" name="n0" xy="0,0" size="1080,1920" type="rect">
+      <relation target="" sidePair="width-width,height-height"/>
+    </graph>
+    <text id="n1_wuau" name="n1" xy="131,777" size="817,365" fontSize="100" align="center" vAlign="middle" autoSize="none" text="GameLoading">
+      <relation target="" sidePair="center-center,middle-middle"/>
+    </text>
+    <component id="n2_wuau" name="bar" src="wuau1" fileName="LoadingBar.xml" xy="106,1591">
+      <ProgressBar max="100"/>
+    </component>
+    <text id="n3_e087" name="test1" xy="357,236" size="342,120" fontSize="42" align="center" vAlign="middle" autoSize="none" text="test1"/>
+    <text id="n4_e087" name="test2" xy="357,377" size="342,120" fontSize="42" align="center" vAlign="middle" autoSize="none" text="test2"/>
+    <text id="n5_e087" name="test3" xy="357,518" size="342,120" fontSize="42" align="center" vAlign="middle" autoSize="none" text="test3"/>
+  </displayList>
+</component>

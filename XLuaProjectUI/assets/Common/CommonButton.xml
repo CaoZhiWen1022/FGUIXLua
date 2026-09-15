@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="100,60" pivot="0.5,0.5" extention="Button">
+  <controller name="button" pages="2,up,3,down" selected="0"/>
+  <displayList>
+    <graph id="n1_n7im" name="n1" xy="0,0" size="100,60" type="rect" fillColor="#ff999999">
+      <relation target="" sidePair="width-width,height-height"/>
+    </graph>
+    <text id="n0_n7im" name="title" xy="0,0" size="100,60" fontSize="26" align="center" vAlign="middle" autoSize="none" text="按钮">
+      <relation target="" sidePair="width-width,height-height"/>
+    </text>
+  </displayList>
+  <Button downEffect="scale" downEffectValue="0.95"/>
+</component>

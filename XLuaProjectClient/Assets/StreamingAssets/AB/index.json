@@ -1,0 +1,35 @@
+{
+  "Common": {
+    "path": "uipackage\\common_c9b050.ab"
+  },
+  "GameLoading": {
+    "path": "uipackage\\gameloading_83d2d9.ab"
+  },
+  "Home": {
+    "path": "uipackage\\home_2c600c.ab"
+  },
+  "PopupTest": {
+    "path": "uipackage\\popuptest_f22267.ab"
+  },
+  "FGUILua": {
+    "path": "xlua\\fguilua_7bb1f2.ab"
+  },
+  "FGUIScripts": {
+    "path": "xlua\\fguiscripts_b75389.ab"
+  },
+  "GameFrame": {
+    "path": "xlua\\gameframe_10977a.ab"
+  },
+  "GameLaunch": {
+    "path": "xlua\\gamelaunch_55c35b.ab"
+  },
+  "Resource": {
+    "path": "xlua\\resource_6553e3.ab"
+  },
+  "Fonts": {
+    "path": "fonts_7de1b2.ab"
+  },
+  "D3Prefabs": {
+    "path": "d3prefabs_98fef3.ab"
+  }
+}

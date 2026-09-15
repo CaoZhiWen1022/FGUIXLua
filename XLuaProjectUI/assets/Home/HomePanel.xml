@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1080,1920">
+  <displayList>
+    <graph id="n0_e087" name="n0" xy="0,0" size="1080,1920" type="rect" fillColor="#ffcccccc">
+      <relation target="" sidePair="width-width,height-height"/>
+    </graph>
+    <component id="n3_n7im" name="popupTest" src="n7im2" fileName="CommonButton.xml" pkg="rovr2x2q" xy="442,1293" size="178,70">
+      <Button title="弹窗测试"/>
+    </component>
+    <component id="n11_hyoh" name="Ripple" src="n7im2" fileName="CommonButton.xml" pkg="rovr2x2q" xy="441,1416" size="178,70">
+      <Button title="水波纹效果"/>
+    </component>
+    <text id="n5_hyoh" name="text1" xy="225,146" size="630,197" fontSize="83" align="center" vAlign="middle" autoSize="none" text="text1"/>
+    <text id="n6_hyoh" name="text2" xy="225,386" size="630,197" fontSize="83" align="center" vAlign="middle" autoSize="none" text="text1"/>
+    <graph id="n7_hyoh" name="n7" xy="267,1583" size="100,100" type="rect" fillColor="#ff9999ff"/>
+    <graph id="n8_hyoh" name="n8" xy="495,1583" size="100,100" type="rect" fillColor="#ffffcccc"/>
+    <graph id="n9_hyoh" name="n9" xy="713,1583" size="100,100" type="rect" fillColor="#ffccffff"/>
+    <loader id="n12_hyoh" name="DeerRoot" xy="363,785" size="354,350"/>
+  </displayList>
+</component>

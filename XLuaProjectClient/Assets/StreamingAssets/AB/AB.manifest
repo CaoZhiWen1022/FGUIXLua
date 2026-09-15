@@ -1,0 +1,37 @@
+ManifestFileVersion: 0
+CRC: 1716173928
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: uipackage/common.ab
+      Dependencies: {}
+    Info_1:
+      Name: uipackage/gameloading.ab
+      Dependencies: {}
+    Info_2:
+      Name: uipackage/home.ab
+      Dependencies: {}
+    Info_3:
+      Name: uipackage/popuptest.ab
+      Dependencies: {}
+    Info_4:
+      Name: xlua/fguilua.ab
+      Dependencies: {}
+    Info_5:
+      Name: xlua/fguiscripts.ab
+      Dependencies: {}
+    Info_6:
+      Name: xlua/gameframe.ab
+      Dependencies: {}
+    Info_7:
+      Name: xlua/gamelaunch.ab
+      Dependencies: {}
+    Info_8:
+      Name: xlua/resource.ab
+      Dependencies: {}
+    Info_9:
+      Name: fonts.ab
+      Dependencies: {}
+    Info_10:
+      Name: d3prefabs.ab
+      Dependencies: {}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="800,600">
+  <displayList>
+    <graph id="n0_n7im" name="n0" xy="0,0" size="800,600" type="rect" fillColor="#ffccffff"/>
+    <text id="n1_n7im" name="n1" xy="268,257" size="264,85" fontSize="65" text="弹窗测试"/>
+    <component id="n3_n7im" name="closeBtn" src="n7im2" fileName="CommonButton.xml" pkg="rovr2x2q" xy="670,25">
+      <Button title="关闭"/>
+    </component>
+  </displayList>
+</component>

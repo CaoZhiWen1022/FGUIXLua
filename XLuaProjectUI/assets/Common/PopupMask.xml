@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component size="1080,1920">
+  <displayList>
+    <graph id="n0_n7im" name="mask" xy="0,0" size="1080,1920" alpha="0.6" type="rect" fillColor="#ff000000"/>
+  </displayList>
+</component>

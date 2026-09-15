@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<packageDescription id="rovr2x2q">
+  <resources>
+    <component id="e0871" name="CommonTest.xml" path="/" exported="true"/>
+    <component id="n7im2" name="CommonButton.xml" path="/" exported="true"/>
+    <component id="n7im3" name="PopupMask.xml" path="/" exported="true"/>
+  </resources>
+  <publish name="" genCode="true"/>
+</packageDescription>
