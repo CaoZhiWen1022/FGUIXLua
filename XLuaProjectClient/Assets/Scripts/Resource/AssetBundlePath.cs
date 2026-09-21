@@ -5,19 +5,13 @@ using System.Text;
 using UnityEngine;
 
 /// <summary>
-/// AssetBundle 路径约定（利于热更：按相对路径逐包解析）。
-/// 启动时由 GameLaunch 加载 index.json 注入「逻辑名 → path」（hash 嵌在文件名中）。
+/// AssetBundle 路径解析：只认 index.json 的逻辑名 → 相对路径，不含具体包名约定。
+/// 启动时由 GameLaunch 加载 index 注入映射（hash 嵌在文件名中）。
 /// 解析优先级：热更本地目录 > CDN > StreamingAssets。
 /// </summary>
 public static class AssetBundlePath
 {
     public const string RootFolderName = "AB";
-    public const string UIPackageFolder = "uipackage";
-    public const string XLuaFolder = "xlua";
-    public const string FontsBundleName = "fonts.ab";
-    public const string FontsIndexKey = "Fonts";
-    public const string D3PrefabsBundleName = "d3prefabs.ab";
-    public const string D3PrefabsIndexKey = "D3Prefabs";
     public const string BundleExtension = ".ab";
     public const string IndexFileName = "index.json";
 
@@ -25,6 +19,7 @@ public static class AssetBundlePath
     {
         public string Path;
         public string Hash;
+        public bool HasLua;
     }
 
     private static string _cdnRoot = string.Empty;
@@ -111,7 +106,7 @@ public static class AssetBundlePath
     }
 
     /// <summary>
-    /// 解析 index.json：{ "Common": { "path": "uipackage\\common_c9b050.ab" }, ... }
+    /// 解析 index.json：{ "逻辑名": { "path": "相对路径.ab", "lua": true }, ... }
     /// </summary>
     public static bool ApplyIndexJson(string json)
     {
@@ -218,81 +213,30 @@ public static class AssetBundlePath
         return list;
     }
 
-    /// <summary>从 index 收集 XLua 相关相对路径。</summary>
-    public static List<string> GetXLuaRelativePathsFromIndex()
+    /// <summary>从 index 收集构建时标记为含 Lua 的包相对路径。</summary>
+    public static List<string> GetLuaRelativePathsFromIndex()
     {
         var list = new List<string>();
-        string prefix = XLuaFolder + "/";
         foreach (var pair in Index)
         {
-            if (pair.Value == null || string.IsNullOrEmpty(pair.Value.Path))
+            if (pair.Value == null || !pair.Value.HasLua || string.IsNullOrEmpty(pair.Value.Path))
             {
                 continue;
             }
 
             string relative = NormalizeRelative(pair.Value.Path);
-            if (relative.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-                || string.Equals(Path.GetDirectoryName(relative), XLuaFolder, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrEmpty(relative) && !list.Contains(relative))
             {
-                if (!list.Contains(relative))
-                {
-                    list.Add(relative);
-                }
+                list.Add(relative);
             }
         }
 
         return list;
     }
 
-    // ---------- 相对路径（优先 index，否则约定回退）----------
-
     public static string GetIndexRelative()
     {
         return IndexFileName;
-    }
-
-    public static string GetUIPackageBundleRelative(string packageName)
-    {
-        string fromIndex = GetRelativePathByKey(packageName);
-        if (!string.IsNullOrEmpty(fromIndex))
-        {
-            return fromIndex;
-        }
-
-        return UIPackageFolder + "/" + packageName.ToLowerInvariant() + BundleExtension;
-    }
-
-    public static string GetXLuaBundleRelative(string folderName)
-    {
-        string fromIndex = GetRelativePathByKey(folderName);
-        if (!string.IsNullOrEmpty(fromIndex))
-        {
-            return fromIndex;
-        }
-
-        return XLuaFolder + "/" + folderName.ToLowerInvariant() + BundleExtension;
-    }
-
-    public static string GetFontsBundleRelative()
-    {
-        string fromIndex = GetRelativePathByKey(FontsIndexKey);
-        if (!string.IsNullOrEmpty(fromIndex))
-        {
-            return fromIndex;
-        }
-
-        return FontsBundleName;
-    }
-
-    public static string GetD3PrefabsBundleRelative()
-    {
-        string fromIndex = GetRelativePathByKey(D3PrefabsIndexKey);
-        if (!string.IsNullOrEmpty(fromIndex))
-        {
-            return fromIndex;
-        }
-
-        return D3PrefabsBundleName;
     }
 
     // ---------- 解析实际加载地址 ----------
@@ -330,29 +274,14 @@ public static class AssetBundlePath
         return CombineUrlOrPath(StreamingAbRoot, relative);
     }
 
-    public static string ResolveUIPackageBundle(string packageName)
-    {
-        return ResolveBundleUrl(GetUIPackageBundleRelative(packageName));
-    }
-
-    public static string ResolveXLuaBundle(string folderName)
-    {
-        return ResolveBundleUrl(GetXLuaBundleRelative(folderName));
-    }
-
-    public static string ResolveFontsBundle()
-    {
-        return ResolveBundleUrl(GetFontsBundleRelative());
-    }
-
-    public static string ResolveD3PrefabsBundle()
-    {
-        return ResolveBundleUrl(GetD3PrefabsBundleRelative());
-    }
-
     public static string ResolveIndexUrl()
     {
         return ResolveBundleUrl(GetIndexRelative());
+    }
+
+    public static string ResolveBundleByKey(string key)
+    {
+        return ResolveBundleUrl(GetRelativePathByKey(key));
     }
 
     /// <summary>热更目录下的落盘路径（下载缓存用）。</summary>
@@ -374,43 +303,6 @@ public static class AssetBundlePath
         }
 
         return CombineUrlOrPath(CdnAbRoot, NormalizeRelative(relativeUnderAb));
-    }
-
-    public static string GetXLuaBundleDirectory()
-    {
-        string hotDir = CombineUrlOrPath(HotUpdateAbRoot, XLuaFolder);
-        if (Directory.Exists(hotDir))
-        {
-            return hotDir;
-        }
-
-        if (HasCdn)
-        {
-            return CombineUrlOrPath(CdnAbRoot, XLuaFolder);
-        }
-
-        return CombineUrlOrPath(StreamingAbRoot, XLuaFolder);
-    }
-
-    public static string GetUIPackageBundleDirectory()
-    {
-        string hotDir = CombineUrlOrPath(HotUpdateAbRoot, UIPackageFolder);
-        if (Directory.Exists(hotDir))
-        {
-            return hotDir;
-        }
-
-        if (HasCdn)
-        {
-            return CombineUrlOrPath(CdnAbRoot, UIPackageFolder);
-        }
-
-        return CombineUrlOrPath(StreamingAbRoot, UIPackageFolder);
-    }
-
-    public static string GetStreamingXLuaBundleDirectory()
-    {
-        return CombineUrlOrPath(StreamingAbRoot, XLuaFolder);
     }
 
     public static bool IsRemoteUrl(string pathOrUrl)
@@ -537,6 +429,7 @@ public static class AssetBundlePath
             SkipWs(json, ref i);
 
             string path = null;
+            bool hasLua = false;
             Expect(json, ref i, '{');
             while (true)
             {
@@ -551,13 +444,16 @@ public static class AssetBundlePath
                 SkipWs(json, ref i);
                 Expect(json, ref i, ':');
                 SkipWs(json, ref i);
-                string value = ReadJsonString(json, ref i);
+                string value = ReadJsonStringOrLiteral(json, ref i);
 
                 if (string.Equals(field, "path", StringComparison.OrdinalIgnoreCase))
                 {
                     path = value;
                 }
-                // 兼容旧 index 的独立 hash 字段（可忽略）
+                else if (string.Equals(field, "lua", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasLua = string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+                }
 
                 SkipWs(json, ref i);
                 if (i < json.Length && json[i] == ',')
@@ -572,6 +468,7 @@ public static class AssetBundlePath
                 {
                     Path = path,
                     Hash = ExtractHashFromPath(path) ?? string.Empty,
+                    HasLua = hasLua,
                 };
             }
 
@@ -607,6 +504,39 @@ public static class AssetBundlePath
         }
 
         i++;
+    }
+
+    private static string ReadJsonStringOrLiteral(string s, ref int i)
+    {
+        SkipWs(s, ref i);
+        if (i >= s.Length)
+        {
+            throw new Exception("expect value at " + i);
+        }
+
+        if (s[i] == '"')
+        {
+            return ReadJsonString(s, ref i);
+        }
+
+        int start = i;
+        while (i < s.Length)
+        {
+            char c = s[i];
+            if (c == ',' || c == '}' || c == ']' || c == ' ' || c == '\t' || c == '\r' || c == '\n')
+            {
+                break;
+            }
+
+            i++;
+        }
+
+        if (i == start)
+        {
+            throw new Exception("expect value at " + start);
+        }
+
+        return s.Substring(start, i - start);
     }
 
     private static string ReadJsonString(string s, ref int i)

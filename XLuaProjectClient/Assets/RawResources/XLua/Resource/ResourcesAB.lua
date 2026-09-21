@@ -6,7 +6,7 @@ function ResourcesAB.LoadUIPackage(packageName, callback)
         if callback then callback(nil) end
         return
     end
-    CS.AssetBundleLoader.LoadUIPackageBundleAsync(packageName, function(bundle)
+    CS.AssetBundleLoader.LoadBundleByKeyAsync(packageName, function(bundle)
         if bundle == nil then
             print(string.format("[ResourcesAB] LoadUIPackage failed: %s", tostring(packageName)))
         end
@@ -18,11 +18,11 @@ function ResourcesAB.UnloadUIPackage(packageName)
     if packageName == nil or packageName == "" then
         return
     end
-    CS.AssetBundleLoader.UnloadUIPackageBundle(packageName)
+    CS.AssetBundleLoader.UnloadBundleByKey(packageName)
 end
 
 function ResourcesAB.LoadD3Prefabs(callback)
-    CS.AssetBundleLoader.LoadD3PrefabsBundleAsync(function(bundle)
+    CS.AssetBundleLoader.LoadBundleByKeyAsync("D3Prefabs", function(bundle)
         if bundle == nil then
             print("[ResourcesAB] LoadD3Prefabs failed")
         end
@@ -31,5 +31,5 @@ function ResourcesAB.LoadD3Prefabs(callback)
 end
 
 function ResourcesAB.UnloadD3Prefabs()
-    CS.AssetBundleLoader.UnloadD3PrefabsBundle()
+    CS.AssetBundleLoader.UnloadBundleByKey("D3Prefabs")
 end

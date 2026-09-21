@@ -35,24 +35,26 @@ public static class AssetBundleLoader
         Runner.StartCoroutine(LoadBundleByRelativeCo(relativeUnderAb, onComplete));
     }
 
-    public static void LoadUIPackageBundleAsync(string packageName, Action<AssetBundle> onComplete)
+    public static void LoadBundleByKeyAsync(string indexKey, Action<AssetBundle> onComplete)
     {
-        LoadBundleByRelativeAsync(AssetBundlePath.GetUIPackageBundleRelative(packageName), onComplete);
+        string relative = AssetBundlePath.GetRelativePathByKey(indexKey);
+        if (string.IsNullOrEmpty(relative))
+        {
+            Debug.LogError("[AssetBundleLoader] index miss: " + indexKey);
+            if (onComplete != null)
+            {
+                onComplete(null);
+            }
+
+            return;
+        }
+
+        LoadBundleByRelativeAsync(relative, onComplete);
     }
 
-    public static void UnloadUIPackageBundle(string packageName)
+    public static void UnloadBundleByKey(string indexKey)
     {
-        ReleaseBundleByRelative(AssetBundlePath.GetUIPackageBundleRelative(packageName));
-    }
-
-    public static void LoadD3PrefabsBundleAsync(Action<AssetBundle> onComplete)
-    {
-        LoadBundleByRelativeAsync(AssetBundlePath.GetD3PrefabsBundleRelative(), onComplete);
-    }
-
-    public static void UnloadD3PrefabsBundle()
-    {
-        ReleaseBundleByRelative(AssetBundlePath.GetD3PrefabsBundleRelative());
+        ReleaseBundleByRelative(AssetBundlePath.GetRelativePathByKey(indexKey));
     }
 
     /// <summary>异步加载 AB/index.json 并注入 AssetBundlePath。</summary>
@@ -91,11 +93,11 @@ public static class AssetBundleLoader
         }
     }
 
-    /// <summary>异步预加载全部 XLua AB，完成后回调 success。</summary>
-    public static void PreloadAllXLuaBundlesAsync(Action<bool> onComplete)
+    /// <summary>异步预加载 index 中标记为 lua 的全部 AB，完成后回调 success。</summary>
+    public static void PreloadAllLuaBundlesAsync(Action<bool> onComplete)
     {
         EnsureRunner();
-        Runner.StartCoroutine(PreloadAllXLuaBundlesCo(onComplete));
+        Runner.StartCoroutine(PreloadAllLuaBundlesCo(onComplete));
     }
 
     public static byte[] LoadLuaBytes(string relativePath)
@@ -236,13 +238,13 @@ public static class AssetBundleLoader
         yield return DownloadTextCo(ToRequestUrl(localPath), onComplete);
     }
 
-    private static IEnumerator PreloadAllXLuaBundlesCo(Action<bool> onComplete)
+    private static IEnumerator PreloadAllLuaBundlesCo(Action<bool> onComplete)
     {
         LuaBytesCache.Clear();
         _xluaPreloaded = false;
 
         Debug.Log(string.Format(
-            "[AssetBundleLoader] preload XLua async hot={0} cdn={1} streaming={2} index={3}",
+            "[AssetBundleLoader] preload Lua async hot={0} cdn={1} streaming={2} index={3}",
             AssetBundlePath.HotUpdateAbRoot,
             AssetBundlePath.HasCdn ? AssetBundlePath.CdnAbRoot : "(none)",
             AssetBundlePath.StreamingAbRoot,
@@ -251,25 +253,12 @@ public static class AssetBundleLoader
         var relatives = new List<string>();
         if (AssetBundlePath.HasIndex)
         {
-            relatives.AddRange(AssetBundlePath.GetXLuaRelativePathsFromIndex());
+            relatives.AddRange(AssetBundlePath.GetLuaRelativePathsFromIndex());
         }
 
         if (relatives.Count == 0)
         {
-            List<string> files = null;
-            yield return ListXLuaBundleFileNamesCo(list => files = list);
-            if (files != null)
-            {
-                for (int i = 0; i < files.Count; i++)
-                {
-                    relatives.Add(AssetBundlePath.XLuaFolder + "/" + files[i]);
-                }
-            }
-        }
-
-        if (relatives.Count == 0)
-        {
-            Debug.LogError("[AssetBundleLoader] no XLua AB found (index/dir/manifest empty)");
+            Debug.LogError("[AssetBundleLoader] no Lua AB in index (rebuild AB to write lua flags)");
             if (onComplete != null)
             {
                 onComplete(false);
@@ -294,7 +283,7 @@ public static class AssetBundleLoader
         }
 
         _xluaPreloaded = allOk;
-        Debug.Log(string.Format("[AssetBundleLoader] XLua preload done, bundles={0}, lua={1}, ok={2}",
+        Debug.Log(string.Format("[AssetBundleLoader] Lua preload done, bundles={0}, lua={1}, ok={2}",
             relatives.Count, LuaBytesCache.Count, allOk));
         if (onComplete != null)
         {
@@ -497,74 +486,6 @@ public static class AssetBundleLoader
         }
     }
 
-    private static IEnumerator ListXLuaBundleFileNamesCo(Action<List<string>> onComplete)
-    {
-        var names = new List<string>();
-
-        string activeDir = AssetBundlePath.GetXLuaBundleDirectory();
-        if (!AssetBundlePath.IsRemoteUrl(activeDir)
-            && activeDir.IndexOf("://", StringComparison.Ordinal) < 0
-            && Directory.Exists(activeDir))
-        {
-            CollectAbFileNames(activeDir, names);
-            if (names.Count > 0)
-            {
-                if (onComplete != null)
-                {
-                    onComplete(names);
-                }
-
-                yield break;
-            }
-        }
-
-        // 远程或 WebGL：读 manifest
-        string manifestUrl = ToRequestUrl(AssetBundlePath.CombineUrlOrPath(activeDir, "manifest.txt"));
-        string text = null;
-        yield return DownloadTextCo(manifestUrl, t => text = t);
-        if (!string.IsNullOrEmpty(text))
-        {
-            ParseManifest(text, names);
-            if (names.Count > 0)
-            {
-                if (onComplete != null)
-                {
-                    onComplete(names);
-                }
-
-                yield break;
-            }
-        }
-
-        string streamingManifest = ToRequestUrl(AssetBundlePath.CombineUrlOrPath(
-            AssetBundlePath.GetStreamingXLuaBundleDirectory(), "manifest.txt"));
-        if (!string.Equals(streamingManifest, manifestUrl, StringComparison.OrdinalIgnoreCase))
-        {
-            text = null;
-            yield return DownloadTextCo(streamingManifest, t => text = t);
-            if (!string.IsNullOrEmpty(text))
-            {
-                ParseManifest(text, names);
-            }
-        }
-
-        if (names.Count == 0)
-        {
-            string streamingDir = AssetBundlePath.GetStreamingXLuaBundleDirectory();
-            if (!AssetBundlePath.IsRemoteUrl(streamingDir)
-                && streamingDir.IndexOf("://", StringComparison.Ordinal) < 0
-                && Directory.Exists(streamingDir))
-            {
-                CollectAbFileNames(streamingDir, names);
-            }
-        }
-
-        if (onComplete != null)
-        {
-            onComplete(names);
-        }
-    }
-
     private static IEnumerator DownloadTextCo(string url, Action<string> onComplete)
     {
         if (string.IsNullOrEmpty(url))
@@ -659,43 +580,6 @@ public static class AssetBundleLoader
 #endif
     }
 
-    private static void CollectAbFileNames(string dir, List<string> names)
-    {
-        string[] files = Directory.GetFiles(dir, "*" + AssetBundlePath.BundleExtension, SearchOption.TopDirectoryOnly);
-        for (int i = 0; i < files.Length; i++)
-        {
-            string name = Path.GetFileName(files[i]);
-            if (!string.IsNullOrEmpty(name) && !names.Contains(name))
-            {
-                names.Add(name);
-            }
-        }
-    }
-
-    private static void ParseManifest(string text, List<string> names)
-    {
-        string[] lines = text.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        for (int i = 0; i < lines.Length; i++)
-        {
-            string line = lines[i].Trim();
-            if (string.IsNullOrEmpty(line) || line.StartsWith("#"))
-            {
-                continue;
-            }
-
-            string name = Path.GetFileName(line.Replace('\\', '/'));
-            if (!name.EndsWith(AssetBundlePath.BundleExtension, StringComparison.OrdinalIgnoreCase))
-            {
-                name = name + AssetBundlePath.BundleExtension;
-            }
-
-            if (!names.Contains(name))
-            {
-                names.Add(name);
-            }
-        }
-    }
-
     private static void CacheLuaAssetsFromBundle(AssetBundle bundle)
     {
         string[] assetNames = bundle.GetAllAssetNames();
@@ -718,14 +602,22 @@ public static class AssetBundleLoader
     private static string ExtractLuaRelativePath(string assetName)
     {
         string path = assetName.Replace('\\', '/');
-        const string marker = "/xlua/";
-        int idx = path.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
-        if (idx < 0)
+        const string tempMarker = "/abbuildtemp/";
+        int idx = path.IndexOf(tempMarker, StringComparison.OrdinalIgnoreCase);
+        if (idx >= 0)
         {
-            return Path.GetFileNameWithoutExtension(path);
+            string relative = StripLuaExtension(path.Substring(idx + tempMarker.Length));
+            int slash = relative.IndexOf('/');
+            if (slash >= 0 && slash + 1 < relative.Length)
+            {
+                // require 相对 RawResources 下的一级目录（通常是 XLua）
+                return relative.Substring(slash + 1);
+            }
+
+            return relative;
         }
 
-        return StripLuaExtension(path.Substring(idx + marker.Length));
+        return Path.GetFileNameWithoutExtension(path);
     }
 
     private static string StripLuaExtension(string path)

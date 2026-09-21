@@ -1,4 +1,13 @@
 {
+  "D3Prefabs": {
+    "path": "d3prefabs_98fef3.ab"
+  },
+  "Fonts": {
+    "path": "fonts_7de1b2.ab"
+  },
+  "GameConfig": {
+    "path": "gameconfig_f52eb0.ab"
+  },
   "Common": {
     "path": "uipackage\\common_c9b050.ab"
   },
@@ -11,25 +20,32 @@
   "PopupTest": {
     "path": "uipackage\\popuptest_f22267.ab"
   },
+  "Config": {
+    "path": "xlua\\config_410949.ab",
+    "lua": true
+  },
   "FGUILua": {
-    "path": "xlua\\fguilua_7bb1f2.ab"
+    "path": "xlua\\fguilua_52cdc2.ab",
+    "lua": true
   },
   "FGUIScripts": {
-    "path": "xlua\\fguiscripts_b75389.ab"
+    "path": "xlua\\fguiscripts_da3253.ab",
+    "lua": true
   },
   "GameFrame": {
-    "path": "xlua\\gameframe_10977a.ab"
+    "path": "xlua\\gameframe_2103a2.ab",
+    "lua": true
   },
   "GameLaunch": {
-    "path": "xlua\\gamelaunch_55c35b.ab"
+    "path": "xlua\\gamelaunch_279910.ab",
+    "lua": true
   },
   "Resource": {
-    "path": "xlua\\resource_6553e3.ab"
+    "path": "xlua\\resource_57a96a.ab",
+    "lua": true
   },
-  "Fonts": {
-    "path": "fonts_7de1b2.ab"
-  },
-  "D3Prefabs": {
-    "path": "d3prefabs_98fef3.ab"
+  "XLuaCommon": {
+    "path": "xlua\\xluacommon_0648cd.ab",
+    "lua": true
   }
 }

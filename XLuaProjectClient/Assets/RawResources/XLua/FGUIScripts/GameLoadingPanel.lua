@@ -83,11 +83,33 @@ function GameLoadingPanel:StartLoad()
     print("[GameLoadingPanel] StartLoad")
     self._progressReady = false
     self._sceneReady = false
+    self._configReady = false
     self._entered = false
+    self._configBinReady = false
 
     -- 进度 0→70，同时后台预加载 Main（不切换场景）
     self:TweenProgressTo(PROGRESS_START, PROGRESS_SCENE, PROGRESS_TWEEN_DURATION, function()
         self._progressReady = true
+        self:TryEnterMain()
+    end)
+
+    GameConfigMgr.Load(function(ok)
+        if not ok then
+            print("[GameLoadingPanel] GameConfig load failed")
+            return
+        end
+        print("[GameLoadingPanel] GameConfig loaded")
+        self._configReady = true
+        self:TryEnterMain()
+    end)
+
+    GameConfigMgr.LoadBin("ConstCfg.bin", function(ok)
+        if not ok then
+            print("[GameLoadingPanel] ConstCfg bin load failed")
+            return
+        end
+        print("[GameLoadingPanel] ConstCfg bin loaded")
+        self._configBinReady = true
         self:TryEnterMain()
     end)
 
@@ -98,9 +120,9 @@ function GameLoadingPanel:StartLoad()
     end)
 end
 
---- 进度与场景都就绪后，再关闭 Loading、打开 Home，并激活 Main
+--- 进度、配置、场景都就绪后，再关闭 Loading、打开 Home，并激活 Main
 function GameLoadingPanel:TryEnterMain()
-    if self._entered or not self._progressReady or not self._sceneReady then
+    if self._entered or not self._progressReady or not self._configReady or not self._configBinReady or not self._sceneReady then
         return
     end
     self._entered = true

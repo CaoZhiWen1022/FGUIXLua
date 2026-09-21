@@ -17,10 +17,14 @@ function HomePanel:OnOpened()
     self.updateTimeSec = 0
     self.deerObj = nil
     self:LoadDeer()
+
+    local config = GameConfigMgr.GetConfig("ConstCfg")
+    
+    print("GameConfigMgr.ListCfg id=1: " .. config.test2)
 end
 
 function HomePanel:OnClosed()
-    self:ClearDeer()
+    self:ClearDeer() 
     UILogicPanel.OnClosed(self)
 end
 

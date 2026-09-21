@@ -3,6 +3,7 @@ if LaunchMode == nil then
     LaunchMode = "Folder"
 end
 
+require("XLuaCommon.XLuaCommonLaunch")
 require("GameFrame.launch")
 require("GameLaunch.UIID")
 require("FGUIScripts.UIBootstrap")

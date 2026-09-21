@@ -1,0 +1,23 @@
+ManifestFileVersion: 0
+CRC: 54075055
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 06fba947a4f67135f93525a35c4d68cf
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 06fba947a4f67135f93525a35c4d68cf
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ABBuildTemp/XLua/FGUIScripts/UIBootstrap.bytes
+- Assets/ABBuildTemp/XLua/FGUIScripts/HomePanel.bytes
+- Assets/ABBuildTemp/XLua/FGUIScripts/GameLoadingPanel.bytes
+- Assets/ABBuildTemp/XLua/FGUIScripts/PopupTest.bytes
+Dependencies: []

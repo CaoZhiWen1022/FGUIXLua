@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 71927616
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 433c0f2daba52ea81bc76c1933ab6cad
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 433c0f2daba52ea81bc76c1933ab6cad
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ABBuildTemp/XLua/Resource/ResourcesMgr.bytes
+- Assets/ABBuildTemp/XLua/Resource/ResourcesAB.bytes
+Dependencies: []

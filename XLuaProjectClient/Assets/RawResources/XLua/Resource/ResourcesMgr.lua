@@ -114,14 +114,7 @@ end
 
 local function ResolveFontAbRelative(abKey)
     abKey = abKey or "Fonts"
-    local relative = CS.AssetBundlePath.GetRelativePathByKey(abKey)
-    if relative ~= nil and relative ~= "" then
-        return relative
-    end
-    if abKey == "Fonts" then
-        return CS.AssetBundlePath.GetFontsBundleRelative()
-    end
-    return abKey
+    return CS.AssetBundlePath.GetRelativePathByKey(abKey)
 end
 
 --- assetName 为包内资源名（含后缀，如 AlibabaPuHuiTi.ttf）；注册名用 Font.name

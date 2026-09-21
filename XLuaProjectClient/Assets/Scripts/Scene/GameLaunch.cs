@@ -80,7 +80,7 @@ public class GameLaunch : MonoBehaviour
 
             bool done = false;
             bool ok = false;
-            AssetBundleLoader.PreloadAllXLuaBundlesAsync(success =>
+            AssetBundleLoader.PreloadAllLuaBundlesAsync(success =>
             {
                 ok = success;
                 done = true;

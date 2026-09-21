@@ -1,0 +1,21 @@
+ManifestFileVersion: 0
+CRC: 3190348597
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 61783f52364214091bfc37a146eea3f9
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 61783f52364214091bfc37a146eea3f9
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ABBuildTemp/GameConfig/gamedata.bytes
+- Assets/ABBuildTemp/GameConfig/ConstCfg.bytes
+Dependencies: []

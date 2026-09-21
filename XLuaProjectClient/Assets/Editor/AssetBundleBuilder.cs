@@ -7,31 +7,28 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// 将 RawResources 下 UIPackage / XLua / Fonts / D3Prefabs 打成 AssetBundle，
-/// 并生成 AB/index.json（逻辑名 → path，hash 嵌入文件名）。
-/// 例：uipackage\common_c9b050.ab、d3prefabs_c9b050.ab
+/// 按 RawResources 文件夹标记收集 AssetBundle，并生成 AB/index.json（逻辑名 → path，hash 嵌入文件名）。
+/// 输出路径 = 相对 RawResources 的小写路径 + .ab，例如：
+/// RawResources/D3Prefabs → AB/d3prefabs.ab
+/// RawResources/XLua/FGUILua → AB/xlua/fguilua.ab
 /// </summary>
 public static class AssetBundleBuilder
 {
-    private const string RawUIPackageRoot = "Assets/RawResources/UIPackage";
-    private const string RawXLuaRoot = "Assets/RawResources/XLua";
-    private const string RawFontsRoot = "Assets/RawResources/Fonts";
-    private const string RawD3PrefabsRoot = "Assets/RawResources/D3Prefabs";
     private const string OutputRoot = "Assets/StreamingAssets/AB";
-    private const string XLuaTempRoot = "Assets/ABBuildTemp/XLua";
-    private const string FontsBundleName = "fonts.ab";
-    private const string D3PrefabsBundleName = "d3prefabs.ab";
+    private const string LuaTempRoot = "Assets/ABBuildTemp";
     private const string IndexFileName = "index.json";
 
-    private static readonly string[] FontExtensions =
+    /// <summary>Unity 默认不打进 AB 的源文件，构建时复制为 .bytes（TextAsset）。</summary>
+    private static readonly string[] BytesSourceExtensions =
     {
-        ".ttf", ".otf", ".ttc", ".fontsettings",
+        ".lua", ".bin",
     };
 
     private class IndexDraft
     {
         public string Key;
         public string Path;
+        public bool HasLua;
     }
 
     private static readonly List<IndexDraft> IndexDrafts = new List<IndexDraft>();
@@ -43,17 +40,14 @@ public static class AssetBundleBuilder
         {
             EnsureDirectory("Assets/StreamingAssets");
             EnsureDirectory(OutputRoot);
-            EnsureDirectory(OutputRoot + "/uipackage");
-            EnsureDirectory(OutputRoot + "/xlua");
 
             IndexDrafts.Clear();
-            PrepareXLuaTempAssets();
+            ABFolderMark.EnsureDefaultMarks();
+            List<ABBundleFolder> folders = ABFolderMark.CollectBundleFolders();
+            PrepareTempBytesAssets(folders);
 
             var builds = new List<AssetBundleBuild>();
-            CollectUIPackageBuilds(builds);
-            CollectXLuaBuilds(builds);
-            CollectFontsBuilds(builds);
-            CollectD3PrefabBuilds(builds);
+            CollectMarkedBuilds(builds, folders);
 
             if (builds.Count == 0)
             {
@@ -75,7 +69,7 @@ public static class AssetBundleBuilder
         }
         finally
         {
-            CleanupXLuaTempAssets();
+            CleanupLuaTempAssets();
             AssetDatabase.Refresh();
         }
     }
@@ -83,7 +77,7 @@ public static class AssetBundleBuilder
     [MenuItem("XLuaProject/Clear AssetBundles", false, 1)]
     public static void ClearAll()
     {
-        CleanupXLuaTempAssets();
+        CleanupLuaTempAssets();
 
         string abs = Path.GetFullPath(OutputRoot);
         if (!Directory.Exists(abs))
@@ -153,7 +147,9 @@ public static class AssetBundleBuilder
             string abs = Path.Combine(outputAbs, relative.Replace('/', Path.DirectorySeparatorChar));
             if (!File.Exists(abs))
             {
-                Debug.LogWarning("[AssetBundleBuilder] hash rename miss file: " + abs);
+                Debug.LogWarning("[AssetBundleBuilder] bundle not produced, drop index: " + draft.Key + " → " + relative);
+                IndexDrafts.RemoveAt(i);
+                i--;
                 continue;
             }
 
@@ -258,7 +254,14 @@ public static class AssetBundleBuilder
             sb.AppendLine("\": {");
             sb.Append("    \"path\": \"");
             sb.Append(EscapeJson(pathForJson));
-            sb.AppendLine("\"");
+            sb.Append("\"");
+            if (draft.HasLua)
+            {
+                sb.AppendLine(",");
+                sb.Append("    \"lua\": true");
+            }
+
+            sb.AppendLine();
             sb.Append("  }");
             if (i < IndexDrafts.Count - 1)
             {
@@ -302,157 +305,70 @@ public static class AssetBundleBuilder
         return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 
-    private static void CollectUIPackageBuilds(List<AssetBundleBuild> builds)
+    private static void CollectMarkedBuilds(List<AssetBundleBuild> builds, List<ABBundleFolder> folders)
     {
-        if (!Directory.Exists(RawUIPackageRoot))
+        for (int i = 0; i < folders.Count; i++)
         {
-            Debug.LogWarning("[AssetBundleBuilder] missing " + RawUIPackageRoot);
-            return;
-        }
-
-        string[] dirs = Directory.GetDirectories(RawUIPackageRoot);
-        for (int i = 0; i < dirs.Length; i++)
-        {
-            string dirName = Path.GetFileName(dirs[i]);
-            string folderAssetPath = (RawUIPackageRoot + "/" + dirName).Replace('\\', '/');
-            var assetNames = CollectAssetPathsUnder(folderAssetPath);
+            ABBundleFolder folder = folders[i];
+            List<string> assetNames = CollectBundleAssets(folder, folders);
             if (assetNames.Count == 0)
             {
+                Debug.Log("[AssetBundleBuilder] skip empty " + folder.AssetPath);
                 continue;
             }
 
-            string relative = "uipackage/" + dirName.ToLowerInvariant() + ".ab";
+            EnsureOutputParent(folder.OutputRelative);
             builds.Add(new AssetBundleBuild
             {
-                assetBundleName = relative,
+                assetBundleName = folder.OutputRelative,
                 assetNames = assetNames.ToArray(),
             });
-            IndexDrafts.Add(new IndexDraft { Key = dirName, Path = relative });
-        }
-    }
-
-    private static void CollectXLuaBuilds(List<AssetBundleBuild> builds)
-    {
-        if (!Directory.Exists(XLuaTempRoot))
-        {
-            return;
-        }
-
-        string[] dirs = Directory.GetDirectories(XLuaTempRoot);
-        for (int i = 0; i < dirs.Length; i++)
-        {
-            string dirName = Path.GetFileName(dirs[i]);
-            string folderAssetPath = (XLuaTempRoot + "/" + dirName).Replace('\\', '/');
-            var assetNames = CollectAssetPathsUnder(folderAssetPath, ".bytes");
-            if (assetNames.Count == 0)
+            IndexDrafts.Add(new IndexDraft
             {
-                continue;
-            }
-
-            string relative = "xlua/" + dirName.ToLowerInvariant() + ".ab";
-            builds.Add(new AssetBundleBuild
-            {
-                assetBundleName = relative,
-                assetNames = assetNames.ToArray(),
+                Key = folder.IndexKey,
+                Path = folder.OutputRelative,
+                HasLua = FolderHasLua(folder),
             });
-            IndexDrafts.Add(new IndexDraft { Key = dirName, Path = relative });
+            Debug.Log(string.Format(
+                "[AssetBundleBuilder] {0} → AB/{1}  assets={2}  index={3}",
+                folder.AssetPath,
+                folder.OutputRelative,
+                assetNames.Count,
+                folder.IndexKey));
         }
     }
 
-    private static void CollectFontsBuilds(List<AssetBundleBuild> builds)
+    private static bool FolderHasLua(ABBundleFolder folder)
     {
-        if (!Directory.Exists(RawFontsRoot))
+        string abs = Path.GetFullPath(folder.AssetPath);
+        if (!Directory.Exists(abs))
         {
-            Debug.LogWarning("[AssetBundleBuilder] missing " + RawFontsRoot);
-            return;
+            return false;
         }
 
-        string abs = Path.GetFullPath(RawFontsRoot);
-        string[] files = Directory.GetFiles(abs, "*", SearchOption.AllDirectories);
-        var assetNames = new List<string>();
-        for (int i = 0; i < files.Length; i++)
-        {
-            string file = files[i];
-            if (file.EndsWith(".meta", StringComparison.OrdinalIgnoreCase))
-            {
-                continue;
-            }
-
-            if (!IsFontAssetFile(file))
-            {
-                continue;
-            }
-
-            string assetPath = ToAssetPath(file);
-            if (!string.IsNullOrEmpty(assetPath))
-            {
-                assetNames.Add(assetPath);
-            }
-        }
-
-        if (assetNames.Count == 0)
-        {
-            Debug.LogWarning("[AssetBundleBuilder] no font assets under " + RawFontsRoot);
-            return;
-        }
-
-        builds.Add(new AssetBundleBuild
-        {
-            assetBundleName = FontsBundleName,
-            assetNames = assetNames.ToArray(),
-        });
-        IndexDrafts.Add(new IndexDraft { Key = "Fonts", Path = FontsBundleName });
-        Debug.Log(string.Format("[AssetBundleBuilder] fonts.ab assets: {0}", assetNames.Count));
+        return Directory.GetFiles(abs, "*.lua", SearchOption.AllDirectories).Length > 0;
     }
 
-    /// <summary>
-    /// 整个 D3Prefabs 打成一个包：d3prefabs.ab，index 逻辑名 D3Prefabs。
-    /// </summary>
-    private static void CollectD3PrefabBuilds(List<AssetBundleBuild> builds)
-    {
-        if (!Directory.Exists(RawD3PrefabsRoot))
-        {
-            Debug.LogWarning("[AssetBundleBuilder] missing " + RawD3PrefabsRoot);
-            return;
-        }
-
-        var assetNames = CollectAssetPathsUnder(RawD3PrefabsRoot);
-        if (assetNames.Count == 0)
-        {
-            Debug.LogWarning("[AssetBundleBuilder] no assets under " + RawD3PrefabsRoot);
-            return;
-        }
-
-        builds.Add(new AssetBundleBuild
-        {
-            assetBundleName = D3PrefabsBundleName,
-            assetNames = assetNames.ToArray(),
-        });
-        IndexDrafts.Add(new IndexDraft { Key = "D3Prefabs", Path = D3PrefabsBundleName });
-        Debug.Log(string.Format("[AssetBundleBuilder] d3prefabs.ab assets: {0}", assetNames.Count));
-    }
-
-    private static bool IsFontAssetFile(string filePath)
-    {
-        string ext = Path.GetExtension(filePath);
-        for (int i = 0; i < FontExtensions.Length; i++)
-        {
-            if (ext.Equals(FontExtensions[i], StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static List<string> CollectAssetPathsUnder(string folderAssetPath, string requiredExtension = null)
+    private static List<string> CollectBundleAssets(ABBundleFolder folder, List<ABBundleFolder> allFolders)
     {
         var result = new List<string>();
+        CollectFilesUnder(folder.AssetPath, folder, allFolders, result, false);
+        string tempFolder = LuaTempRoot + "/" + ABFolderMark.GetRelativeFromRaw(folder.AssetPath);
+        CollectFilesUnder(tempFolder, folder, allFolders, result, true);
+        return result;
+    }
+
+    private static void CollectFilesUnder(
+        string folderAssetPath,
+        ABBundleFolder current,
+        List<ABBundleFolder> allFolders,
+        List<string> result,
+        bool luaTemp)
+    {
         string abs = Path.GetFullPath(folderAssetPath);
         if (!Directory.Exists(abs))
         {
-            return result;
+            return;
         }
 
         string[] files = Directory.GetFiles(abs, "*", SearchOption.AllDirectories);
@@ -464,20 +380,51 @@ public static class AssetBundleBuilder
                 continue;
             }
 
-            if (requiredExtension != null
-                && !file.EndsWith(requiredExtension, StringComparison.OrdinalIgnoreCase))
+            if (!luaTemp && IsBytesSourceFile(file))
+            {
+                continue;
+            }
+
+            if (luaTemp && !file.EndsWith(".bytes", StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
 
             string assetPath = ToAssetPath(file);
-            if (!string.IsNullOrEmpty(assetPath))
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                continue;
+            }
+
+            if (ABFolderMark.BelongsToDeeperBundle(MapTempPathToRaw(assetPath), current.AssetPath, allFolders))
+            {
+                continue;
+            }
+
+            if (!result.Contains(assetPath))
             {
                 result.Add(assetPath);
             }
         }
+    }
 
-        return result;
+    /// <summary>ABBuildTemp/XLua/FGUILua/x.bytes → Assets/RawResources/XLua/FGUILua/x.lua，供嵌套分包判断。</summary>
+    private static string MapTempPathToRaw(string assetPath)
+    {
+        string path = ABFolderMark.NormalizeAssetPath(assetPath);
+        string prefix = LuaTempRoot + "/";
+        if (!path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return path;
+        }
+
+        string relative = path.Substring(prefix.Length);
+        if (relative.EndsWith(".bytes", StringComparison.OrdinalIgnoreCase))
+        {
+            relative = relative.Substring(0, relative.Length - ".bytes".Length) + ".lua";
+        }
+
+        return ABFolderMark.RawRoot + "/" + relative;
     }
 
     private static string ToAssetPath(string absolutePath)
@@ -492,49 +439,83 @@ public static class AssetBundleBuilder
         return "Assets" + full.Substring(dataPath.Length);
     }
 
-    private static void PrepareXLuaTempAssets()
+    private static bool IsBytesSourceFile(string filePath)
     {
-        CleanupXLuaTempAssets();
-        EnsureDirectory(XLuaTempRoot);
-
-        if (!Directory.Exists(RawXLuaRoot))
+        string ext = Path.GetExtension(filePath);
+        for (int i = 0; i < BytesSourceExtensions.Length; i++)
         {
-            Debug.LogWarning("[AssetBundleBuilder] missing " + RawXLuaRoot);
+            if (ext.Equals(BytesSourceExtensions[i], StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void PrepareTempBytesAssets(List<ABBundleFolder> folders)
+    {
+        CleanupLuaTempAssets();
+        if (folders == null || folders.Count == 0)
+        {
             return;
         }
 
-        string absRaw = Path.GetFullPath(RawXLuaRoot);
-        string absTemp = Path.GetFullPath(XLuaTempRoot);
+        string absRawRoot = Path.GetFullPath(ABFolderMark.RawRoot);
+        string absTempRoot = Path.GetFullPath(LuaTempRoot);
+        int copied = 0;
 
-        string[] luaFiles = Directory.GetFiles(absRaw, "*.lua", SearchOption.AllDirectories);
-        for (int i = 0; i < luaFiles.Length; i++)
+        for (int i = 0; i < folders.Count; i++)
         {
-            string src = luaFiles[i];
-            string rel = src.Substring(absRaw.Length)
-                .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-            string dstRel = Path.ChangeExtension(rel, ".bytes");
-            string dst = Path.Combine(absTemp, dstRel);
-
-            string dstDir = Path.GetDirectoryName(dst);
-            if (!string.IsNullOrEmpty(dstDir) && !Directory.Exists(dstDir))
+            string absFolder = Path.GetFullPath(folders[i].AssetPath);
+            if (!Directory.Exists(absFolder))
             {
-                Directory.CreateDirectory(dstDir);
+                continue;
             }
 
-            File.Copy(src, dst, true);
+            string[] files = Directory.GetFiles(absFolder, "*", SearchOption.AllDirectories);
+            for (int j = 0; j < files.Length; j++)
+            {
+                string src = files[j];
+                if (src.EndsWith(".meta", StringComparison.OrdinalIgnoreCase) || !IsBytesSourceFile(src))
+                {
+                    continue;
+                }
+
+                if (ABFolderMark.BelongsToDeeperBundle(ToAssetPath(src), folders[i].AssetPath, folders))
+                {
+                    continue;
+                }
+
+                string rel = src.Substring(absRawRoot.Length)
+                    .TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                string dst = Path.Combine(absTempRoot, Path.ChangeExtension(rel, ".bytes"));
+                string dstDir = Path.GetDirectoryName(dst);
+                if (!string.IsNullOrEmpty(dstDir) && !Directory.Exists(dstDir))
+                {
+                    Directory.CreateDirectory(dstDir);
+                }
+
+                File.Copy(src, dst, true);
+                copied++;
+            }
         }
 
-        AssetDatabase.Refresh();
+        if (copied > 0)
+        {
+            AssetDatabase.Refresh();
+            Debug.Log("[AssetBundleBuilder] copied " + copied + " lua/bin → " + LuaTempRoot + " as .bytes");
+        }
     }
 
-    private static void CleanupXLuaTempAssets()
+    private static void CleanupLuaTempAssets()
     {
-        if (AssetDatabase.IsValidFolder("Assets/ABBuildTemp"))
+        if (AssetDatabase.IsValidFolder(LuaTempRoot))
         {
-            AssetDatabase.DeleteAsset("Assets/ABBuildTemp");
+            AssetDatabase.DeleteAsset(LuaTempRoot);
         }
 
-        string abs = Path.GetFullPath("Assets/ABBuildTemp");
+        string abs = Path.GetFullPath(LuaTempRoot);
         if (Directory.Exists(abs))
         {
             Directory.Delete(abs, true);
@@ -545,6 +526,17 @@ public static class AssetBundleBuilder
         {
             File.Delete(absMeta);
         }
+    }
+
+    private static void EnsureOutputParent(string outputRelative)
+    {
+        string dir = Path.GetDirectoryName(outputRelative.Replace('/', Path.DirectorySeparatorChar));
+        if (string.IsNullOrEmpty(dir))
+        {
+            return;
+        }
+
+        EnsureDirectory(OutputRoot + "/" + dir.Replace('\\', '/'));
     }
 
     private static void EnsureDirectory(string assetOrAbsPath)

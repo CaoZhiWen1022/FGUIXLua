@@ -1,0 +1,35 @@
+ManifestFileVersion: 0
+CRC: 3278875665
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 95906642e87958c51b6b768a771b4b57
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5ad585dd02dfb5016c0dad519eab8f49
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 95906642e87958c51b6b768a771b4b57
+HashAppended: 0
+ClassTypes:
+- Class: 49
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/ABBuildTemp/XLua/GameFrame/UIFrame.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Core/FGUIFrameEnum.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Mgr/SceneMgr.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Logic/UILogicPanel.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Logic/UIPopup.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Logic/UIFullMask.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Mgr/UIBundleMgr.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Mgr/PopupQueueMgr.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/launch.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Core/UIFrameConfig.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Logic/UIBase.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Mgr/UIRegister.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/View/FGUIPanel.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Core/OpenUIParam.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Core/FairyGUI.bytes
+- Assets/ABBuildTemp/XLua/GameFrame/Mgr/TimerMgr.bytes
+Dependencies: []
